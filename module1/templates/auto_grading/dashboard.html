@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Grading Dashboard - {{ user.first_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .model-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .review-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .grading-result {
+            border-left: 4px solid #007bff;
+            transition: transform 0.2s;
+        }
+        .grading-result:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .confidence-badge {
+            font-size: 0.8em;
+            padding: 0.25rem 0.5rem;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+        .action-btn {
+            border-radius: 25px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-robot me-2"></i>Auto-Grading System
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('auto_grading.review_interface') }}">
+                    <i class="fas fa-eye me-1"></i>Review Interface
+                </a>
+                <a class="nav-link" href="{{ url_for('student_dashboard') }}">
+                    <i class="fas fa-home me-1"></i>Dashboard
+                </a>
+                <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">
+                    <i class="fas fa-robot text-primary me-2"></i>
+                    Auto-Grading Dashboard
+                </h1>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <i class="fas fa-graduation-cap fa-2x mb-2"></i>
+                    <h3 id="todayGradings">0</h3>
+                    <p class="mb-0">Today's Gradings</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <h3 id="pendingReviews">0</h3>
+                    <p class="mb-0">Pending Reviews</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <i class="fas fa-chart-line fa-2x mb-2"></i>
+                    <h3 id="avgConfidence">0%</h3>
+                    <p class="mb-0">Avg Confidence</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card text-center">
+                    <i class="fas fa-cogs fa-2x mb-2"></i>
+                    <h3 id="activeModels">0</h3>
+                    <p class="mb-0">Active Models</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title mb-3">
+                            <i class="fas fa-bolt text-warning me-2"></i>Quick Actions
+                        </h5>
+                        <button class="btn btn-primary action-btn me-3" onclick="createGradingModel()">
+                            <i class="fas fa-plus me-2"></i>Create Model
+                        </button>
+                        <a href="{{ url_for('auto_grading.review_interface') }}" class="btn btn-success action-btn me-3">
+                            <i class="fas fa-eye me-2"></i>Review Responses
+                        </button>
+                        <button class="btn btn-info action-btn" onclick="loadAnalytics()">
+                            <i class="fas fa-sync-alt me-2"></i>Refresh Analytics
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Model Performance -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-bar text-info me-2"></i>Model Performance
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="modelPerformance">
+                            <p class="text-muted text-center">Loading model performance...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Gradings -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history text-success me-2"></i>Recent Gradings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="recentGradings">
+                            <p class="text-muted text-center">Loading recent gradings...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Charts -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-pie text-warning me-2"></i>Grading Volume
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="gradingVolumeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line text-danger me-2"></i>Confidence Trends
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="confidenceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Model Modal -->
+    <div class="modal fade" id="createModelModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Grading Model</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="modelForm">
+                        <div class="mb-3">
+                            <label for="modelName" class="form-label">Model Name</label>
+                            <input type="text" class="form-control" id="modelName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="modelType" class="form-label">Model Type</label>
+                            <select class="form-select" id="modelType" required>
+                                <option value="">Select model type</option>
+                                <option value="nlp">NLP</option>
+                                <option value="code_analysis">Code Analysis</option>
+                                <option value="ml">Machine Learning</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="gradingType" class="form-label">Grading Type</label>
+                            <select class="form-select" id="gradingType" required>
+                                <option value="">Select grading type</option>
+                                <option value="essay">Essay</option>
+                                <option value="short_answer">Short Answer</option>
+                                <option value="code">Code</option>
+                                <option value="open_ended">Open Ended</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="modelDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="modelDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitModel()">Create Model</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let gradingVolumeChart = null;
+        let confidenceChart = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadQuickStats();
+            loadModelPerformance();
+            loadRecentGradings();
+            loadAnalytics();
+        });
+
+        // Load quick statistics
+        async function loadQuickStats() {
+            try {
+                const response = await fetch('/auto_grading/api/quick-stats');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('todayGradings').textContent = data.today_gradings;
+                    document.getElementById('pendingReviews').textContent = data.pending_reviews;
+                    document.getElementById('avgConfidence').textContent = (data.average_confidence * 100).toFixed(1) + '%';
+                    document.getElementById('activeModels').textContent = data.active_models;
+                }
+            } catch (error) {
+                console.error('Error loading quick stats:', error);
+            }
+        }
+
+        // Load model performance
+        async function loadModelPerformance() {
+            try {
+                const response = await fetch('/auto_grading/analytics');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const container = document.getElementById('modelPerformance');
+                    
+                    if (data.analytics.model_performance.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center">
+                                <i class="fas fa-robot fa-3x text-muted mb-3"></i>
+                                <h5>No models yet</h5>
+                                <p class="text-muted">Create your first grading model to get started</p>
+                                <button class="btn btn-primary" onclick="createGradingModel()">
+                                    <i class="fas fa-plus me-2"></i>Create Model
+                                </button>
+                            </div>
+                        `;
+                    } else {
+                        let html = '<div class="row">';
+                        data.analytics.model_performance.forEach(model => {
+                            const confidenceColor = model.avg_confidence > 0.8 ? 'success' : 
+                                                  model.avg_confidence > 0.6 ? 'warning' : 'danger';
+                            
+                            html += `
+                                <div class="col-md-6 mb-3">
+                                    <div class="card grading-result">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <h6 class="card-title">${model.name}</h6>
+                                                <span class="badge bg-${confidenceColor} confidence-badge">
+                                                    ${(model.avg_confidence * 100).toFixed(1)}% Confidence
+                                                </span>
+                                            </div>
+                                            <div class="row text-center">
+                                                <div class="col-6">
+                                                    <small class="text-muted">Total Graded</small>
+                                                    <div class="fw-bold">${model.total_graded}</div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <small class="text-muted">Avg Confidence</small>
+                                                    <div class="fw-bold">${(model.avg_confidence * 100).toFixed(1)}%</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                        container.innerHTML = html;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading model performance:', error);
+            }
+        }
+
+        // Load recent gradings
+        async function loadRecentGradings() {
+            try {
+                const response = await fetch('/auto_grading/analytics');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const container = document.getElementById('recentGradings');
+                    
+                    if (data.analytics.recent_gradings.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center">
+                                <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                                <h5>No gradings yet</h5>
+                                <p class="text-muted">Start grading responses to see activity here</p>
+                            </div>
+                        `;
+                    } else {
+                        let html = '<div class="table-responsive"><table class="table table-hover">';
+                        html += `
+                            <thead>
+                                <tr>
+                                    <th>Response ID</th>
+                                    <th>Score</th>
+                                    <th>Confidence</th>
+                                    <th>Processing Time</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                        `;
+                        
+                        data.analytics.recent_gradings.forEach(grading => {
+                            const confidenceColor = grading.confidence_score > 0.8 ? 'success' : 
+                                                  grading.confidence_score > 0.6 ? 'warning' : 'danger';
+                            const reviewStatus = grading.needs_human_review ? 
+                                '<span class="badge bg-warning">Needs Review</span>' : 
+                                '<span class="badge bg-success">Auto-Graded</span>';
+                            
+                            html += `
+                                <tr>
+                                    <td>#${grading.response_id}</td>
+                                    <td>${grading.overall_score.toFixed(1)}/10</td>
+                                    <td>
+                                        <span class="badge bg-${confidenceColor}">
+                                            ${(grading.confidence_score * 100).toFixed(1)}%
+                                        </span>
+                                    </td>
+                                    <td>${grading.processing_time.toFixed(2)}s</td>
+                                    <td>${reviewStatus}</td>
+                                </tr>
+                            `;
+                        });
+                        
+                        html += '</tbody></table></div>';
+                        container.innerHTML = html;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading recent gradings:', error);
+            }
+        }
+
+        // Load analytics
+        async function loadAnalytics() {
+            try {
+                const response = await fetch('/auto_grading/analytics');
+                const data = await response.json();
+                
+                if (data.success) {
+                    createGradingVolumeChart(data.analytics);
+                    createConfidenceChart(data.analytics);
+                }
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+            }
+        }
+
+        // Create grading volume chart
+        function createGradingVolumeChart(analytics) {
+            const ctx = document.getElementById('gradingVolumeChart').getContext('2d');
+            
+            if (gradingVolumeChart) {
+                gradingVolumeChart.destroy();
+            }
+            
+            // Sample data - in real implementation, this would come from analytics
+            const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const volumes = [45, 52, 38, 67, 89, 34, 56];
+            
+            gradingVolumeChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Gradings',
+                        data: volumes,
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create confidence chart
+        function createConfidenceChart(analytics) {
+            const ctx = document.getElementById('confidenceChart').getContext('2d');
+            
+            if (confidenceChart) {
+                confidenceChart.destroy();
+            }
+            
+            // Sample data - in real implementation, this would come from analytics
+            const labels = ['Model 1', 'Model 2', 'Model 3', 'Model 4'];
+            const confidences = [0.85, 0.92, 0.78, 0.88];
+            
+            confidenceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Confidence Score',
+                        data: confidences,
+                        borderColor: '#f5576c',
+                        backgroundColor: 'rgba(245, 87, 108, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 1,
+                            ticks: {
+                                callback: function(value) {
+                                    return (value * 100).toFixed(0) + '%';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create grading model
+        function createGradingModel() {
+            const modal = new bootstrap.Modal(document.getElementById('createModelModal'));
+            modal.show();
+        }
+
+        // Submit model
+        async function submitModel() {
+            const formData = {
+                name: document.getElementById('modelName').value,
+                model_type: document.getElementById('modelType').value,
+                grading_type: document.getElementById('gradingType').value,
+                description: document.getElementById('modelDescription').value
+            };
+            
+            try {
+                const response = await fetch('/auto_grading/models', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Model created successfully!');
+                    bootstrap.Modal.getInstance(document.getElementById('createModelModal')).hide();
+                    loadModelPerformance();
+                    loadQuickStats();
+                } else {
+                    alert('Error creating model: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error creating model:', error);
+                alert('Error creating model. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html> 

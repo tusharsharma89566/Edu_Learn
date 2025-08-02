@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduLearn - Chat Support</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            --success-color: #4facfe;
+            --warning-color: #43e97b;
+            --danger-color: #ff6b6b;
+            --text-dark: #2d3748;
+            --text-light: #718096;
+            --bg-light: #f8fafc;
+            --sidebar-width: 280px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-light);
+            margin: 0;
+            padding: 0;
+        }
+
+        .chat-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 30px 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header h3 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .sidebar-header p {
+            margin: 5px 0 0 0;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            margin: 5px 0;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: var(--accent-color);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-left-color: var(--accent-color);
+        }
+
+        .nav-link i {
+            width: 20px;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+
+        .page-subtitle {
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+
+        /* Chat Styles */
+        .chat-window {
+            display: flex;
+            flex-direction: column;
+            height: 70vh;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 15px;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            background: #e3f2fd;
+            align-self: flex-end;
+            border-bottom-right-radius: 5px;
+        }
+
+        .bot-message {
+            background: #f5f5f5;
+            align-self: flex-start;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .user-message .message-header {
+            color: #1976d2;
+        }
+
+        .bot-message .message-header {
+            color: #666;
+        }
+
+        .message-content {
+            line-height: 1.4;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #eee;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 1px solid #ddd;
+            border-radius: 25px;
+            outline: none;
+            font-size: 1rem;
+        }
+
+        .chat-input button {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 25px;
+            margin-left: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .chat-input button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        /* FAQ Section */
+        .faq-section {
+            margin-top: 30px;
+        }
+
+        .faq-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .faq-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .faq-question {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .faq-answer {
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        /* Reminders Section */
+        .reminders-section {
+            margin-top: 30px;
+        }
+
+        .reminder-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .reminder-title {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .reminder-time {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .reminder-description {
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .message {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h3><i class="fas fa-robot me-2"></i>EduLearn</h3>
+                <p>Learning Assistant</p>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-item">
+                    <a href="/student-dashboard" class="nav-link">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/content/courses" class="nav-link">
+                        <i class="fas fa-book"></i>
+                        Courses
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/chatbot/chat" class="nav-link active">
+                        <i class="fas fa-comments"></i>
+                        Chat Support
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/progress/dashboard" class="nav-link">
+                        <i class="fas fa-chart-line"></i>
+                        Progress
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/auth/logout" class="nav-link">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </a>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">Learning Assistant</h1>
+                <p class="page-subtitle">Get instant help with your learning journey</p>
+            </div>
+
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="chat-window">
+                        <div class="chat-header">
+                            <h4><i class="fas fa-robot me-2"></i>Learning Assistant</h4>
+                            <p>Ask me anything about courses, assessments, or learning resources</p>
+                        </div>
+                        <div class="chat-messages" id="chatMessages">
+                            {% for message in messages %}
+                                {% if message.message_type == 'user' %}
+                                    <div class="message user-message">
+                                        <div class="message-header">You</div>
+                                        <div class="message-content">{{ message.message }}</div>
+                                    </div>
+                                {% elif message.message_type == 'bot' %}
+                                    <div class="message bot-message">
+                                        <div class="message-header">Assistant</div>
+                                        <div class="message-content">{{ message.response or message.message }}</div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="chat-input">
+                            <input type="text" id="messageInput" placeholder="Type your question here...">
+                            <button id="sendButton"><i class="fas fa-paper-plane me-2"></i>Send</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="reminders-section">
+                        <h3 class="faq-header"><i class="fas fa-bell me-2"></i>Your Reminders</h3>
+                        <div id="remindersList">
+                            <!-- Reminders will be loaded here -->
+                        </div>
+                        <button class="btn btn-primary w-100 mt-3" data-bs-toggle="modal" data-bs-target="#reminderModal">
+                            <i class="fas fa-plus me-2"></i>Add Reminder
+                        </button>
+                    </div>
+                    
+                    <div class="faq-section">
+                        <h3 class="faq-header"><i class="fas fa-question-circle me-2"></i>Common Questions</h3>
+                        {% for faq in faqs %}
+                            <div class="faq-item" onclick="useFAQ('{{ faq.question }}')">
+                                <div class="faq-question">
+                                    {{ faq.question }}
+                                    <i class="fas fa-chevron-right"></i>
+                                </div>
+                                <div class="faq-answer">{{ faq.answer }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reminder Modal -->
+    <div class="modal fade" id="reminderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Study Reminder</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="reminderForm">
+                        <div class="mb-3">
+                            <label for="reminderTitle" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="reminderTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reminderDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="reminderDescription" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reminderTime" class="form-label">Reminder Time</label>
+                            <input type="datetime-local" class="form-control" id="reminderTime" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveReminder">Save Reminder</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Load reminders on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadReminders();
+        });
+
+        // Send message when button is clicked
+        document.getElementById('sendButton').addEventListener('click', sendMessage);
+        
+        // Send message when Enter is pressed
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Save reminder
+        document.getElementById('saveReminder').addEventListener('click', saveReminder);
+
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message to chat
+            addMessageToChat('You', message, 'user');
+            
+            // Clear input
+            messageInput.value = '';
+            
+            // Send to server
+            fetch('/chatbot/chat/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.bot_response) {
+                    addMessageToChat('Assistant', data.bot_response.response, 'bot');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                addMessageToChat('Assistant', 'Sorry, I encountered an error. Please try again.', 'bot');
+            });
+        }
+
+        function addMessageToChat(sender, content, type) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            
+            messageDiv.innerHTML = `
+                <div class="message-header">${sender}</div>
+                <div class="message-content">${content}</div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function useFAQ(question) {
+            const messageInput = document.getElementById('messageInput');
+            messageInput.value = question;
+            messageInput.focus();
+        }
+
+        function loadReminders() {
+            fetch('/chatbot/chat/reminders')
+            .then(response => response.json())
+            .then(data => {
+                const remindersList = document.getElementById('remindersList');
+                remindersList.innerHTML = '';
+                
+                if (data.length === 0) {
+                    remindersList.innerHTML = '<p class="text-muted text-center">No upcoming reminders</p>';
+                    return;
+                }
+                
+                data.forEach(reminder => {
+                    const reminderDiv = document.createElement('div');
+                    reminderDiv.className = 'reminder-item';
+                    
+                    const reminderTime = new Date(reminder.reminder_time);
+                    const formattedTime = reminderTime.toLocaleString();
+                    
+                    reminderDiv.innerHTML = `
+                        <div class="reminder-title">${reminder.title}</div>
+                        <div class="reminder-time"><i class="fas fa-clock me-2"></i>${formattedTime}</div>
+                        ${reminder.description ? `<div class="reminder-description">${reminder.description}</div>` : ''}
+                    `;
+                    
+                    remindersList.appendChild(reminderDiv);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading reminders:', error);
+            });
+        }
+
+        function saveReminder() {
+            const title = document.getElementById('reminderTitle').value;
+            const description = document.getElementById('reminderDescription').value;
+            const time = document.getElementById('reminderTime').value;
+            
+            if (!title || !time) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            fetch('/chatbot/chat/reminders/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    title: title,
+                    description: description,
+                    reminder_time: new Date(time).toISOString()
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert('Reminder created successfully!');
+                    document.getElementById('reminderForm').reset();
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('reminderModal'));
+                    modal.hide();
+                    loadReminders();
+                } else {
+                    alert('Error creating reminder: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error creating reminder');
+            });
+        }
+    </script>
+</body>
+</html>

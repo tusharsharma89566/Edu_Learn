@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recommendations Dashboard - {{ user.first_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .recommendation-card {
+            transition: transform 0.2s;
+            border-left: 4px solid #007bff;
+        }
+        .recommendation-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .confidence-badge {
+            font-size: 0.8em;
+        }
+        .insight-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .pattern-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        .cluster-card {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+        .loading-spinner {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-brain me-2"></i>Learning Recommendations
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('recommendation.preferences_page') }}">
+                    <i class="fas fa-cog me-1"></i>Preferences
+                </a>
+                <a class="nav-link" href="{{ url_for('student_dashboard') }}">
+                    <i class="fas fa-home me-1"></i>Dashboard
+                </a>
+                <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">
+                    <i class="fas fa-lightbulb text-warning me-2"></i>
+                    Personalized Recommendations
+                </h1>
+            </div>
+        </div>
+
+        <!-- Recommendation Type Selector -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Recommendation Types</h5>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="recType" id="hybrid" value="hybrid" checked>
+                            <label class="btn btn-outline-primary" for="hybrid">
+                                <i class="fas fa-magic me-1"></i>Hybrid
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="recType" id="content" value="content-based">
+                            <label class="btn btn-outline-primary" for="content">
+                                <i class="fas fa-tags me-1"></i>Content-Based
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="recType" id="collaborative" value="collaborative">
+                            <label class="btn btn-outline-primary" for="collaborative">
+                                <i class="fas fa-users me-1"></i>Collaborative
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="recType" id="gap" value="gap-filling">
+                            <label class="btn btn-outline-primary" for="gap">
+                                <i class="fas fa-puzzle-piece me-1"></i>Gap-Filling
+                            </label>
+                        </div>
+                        <button class="btn btn-success ms-3" onclick="generateRecommendations()">
+                            <i class="fas fa-sync-alt me-1"></i>Generate New
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="row">
+            <div class="col-12 text-center loading-spinner" id="loadingSpinner">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Generating personalized recommendations...</p>
+            </div>
+        </div>
+
+        <!-- Recommendations Section -->
+        <div class="row" id="recommendationsSection">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-star text-warning me-2"></i>
+                            Recommended for You
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="recommendationsList" class="row">
+                            <!-- Recommendations will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insights Section -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card insight-card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-chart-line me-2"></i>Learning Insights
+                        </h5>
+                        <div id="learningInsights">
+                            <p>Loading your learning patterns...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card pattern-card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-clock me-2"></i>Study Patterns
+                        </h5>
+                        <div id="studyPatterns">
+                            <p>Analyzing your study habits...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cluster Information -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card cluster-card">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-users me-2"></i>Learning Community
+                        </h5>
+                        <div id="clusterInfo">
+                            <p>Finding similar learners...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let currentRecommendationType = 'hybrid';
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadRecommendations();
+            loadLearningInsights();
+            loadStudyPatterns();
+            loadClusterInfo();
+            
+            // Add event listeners for recommendation type changes
+            document.querySelectorAll('input[name="recType"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    currentRecommendationType = this.value;
+                    loadRecommendations();
+                });
+            });
+        });
+
+        // Load recommendations
+        async function loadRecommendations() {
+            const recommendationsList = document.getElementById('recommendationsList');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            
+            loadingSpinner.style.display = 'block';
+            recommendationsList.innerHTML = '';
+            
+            try {
+                const response = await fetch(`/recommendation/recommendations?type=${currentRecommendationType}&limit=6`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.recommendations.length === 0) {
+                        recommendationsList.innerHTML = `
+                            <div class="col-12 text-center">
+                                <i class="fas fa-info-circle text-muted" style="font-size: 3rem;"></i>
+                                <p class="text-muted mt-2">No recommendations available yet. Complete some courses to get personalized suggestions!</p>
+                            </div>
+                        `;
+                    } else {
+                        data.recommendations.forEach(rec => {
+                            const card = createRecommendationCard(rec);
+                            recommendationsList.appendChild(card);
+                        });
+                    }
+                } else {
+                    recommendationsList.innerHTML = `
+                        <div class="col-12 text-center">
+                            <i class="fas fa-exclamation-triangle text-warning" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-2">Unable to load recommendations. Please try again.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading recommendations:', error);
+                recommendationsList.innerHTML = `
+                    <div class="col-12 text-center">
+                        <i class="fas fa-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-2">Error loading recommendations. Please try again.</p>
+                    </div>
+                `;
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        // Create recommendation card
+        function createRecommendationCard(recommendation) {
+            const col = document.createElement('div');
+            col.className = 'col-md-6 col-lg-4 mb-3';
+            
+            const confidenceColor = recommendation.score > 0.8 ? 'success' : 
+                                  recommendation.score > 0.6 ? 'warning' : 'secondary';
+            
+            col.innerHTML = `
+                <div class="card recommendation-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <span class="badge bg-${confidenceColor} confidence-badge">
+                                ${Math.round(recommendation.score * 100)}% Match
+                            </span>
+                            <small class="text-muted">${recommendation.type}</small>
+                        </div>
+                        
+                        <h6 class="card-title">${recommendation.content.title}</h6>
+                        <p class="card-text small text-muted">
+                            ${recommendation.content.description ? recommendation.content.description.substring(0, 100) + '...' : 'No description available'}
+                        </p>
+                        
+                        ${recommendation.content.instructor ? `
+                            <p class="small mb-2">
+                                <i class="fas fa-user me-1"></i>${recommendation.content.instructor}
+                            </p>
+                        ` : ''}
+                        
+                        ${recommendation.reasoning ? `
+                            <p class="small text-info mb-2">
+                                <i class="fas fa-lightbulb me-1"></i>${recommendation.reasoning}
+                            </p>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="card-footer bg-transparent">
+                        <button class="btn btn-sm btn-primary" onclick="viewRecommendation(${recommendation.content.id}, '${recommendation.content_type}')">
+                            <i class="fas fa-eye me-1"></i>View
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="markAsViewed(${recommendation.content.id})">
+                            <i class="fas fa-check me-1"></i>Mark Viewed
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            return col;
+        }
+
+        // Generate new recommendations
+        async function generateRecommendations() {
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            loadingSpinner.style.display = 'block';
+            
+            try {
+                const response = await fetch('/recommendation/recommendations/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        type: currentRecommendationType,
+                        limit: 6
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Reload recommendations
+                    await loadRecommendations();
+                    
+                    // Show success message
+                    showAlert('success', `Generated ${data.stored_count} new recommendations!`);
+                } else {
+                    showAlert('danger', 'Failed to generate recommendations');
+                }
+            } catch (error) {
+                console.error('Error generating recommendations:', error);
+                showAlert('danger', 'Error generating recommendations');
+            } finally {
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        // Load learning insights
+        async function loadLearningInsights() {
+            const insightsDiv = document.getElementById('learningInsights');
+            
+            try {
+                const response = await fetch('/recommendation/patterns');
+                const data = await response.json();
+                
+                if (data.success && data.patterns) {
+                    const patterns = data.patterns;
+                    insightsDiv.innerHTML = `
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <h4>${Math.round(patterns.completion_rate * 100)}%</h4>
+                                    <small>Completion Rate</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <h4>${Math.round(patterns.avg_session_duration)}m</h4>
+                                    <small>Avg Session</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <small>
+                                <i class="fas fa-calendar me-1"></i>
+                                ${patterns.sessions_per_week.toFixed(1)} sessions per week
+                            </small>
+                        </div>
+                    `;
+                } else {
+                    insightsDiv.innerHTML = '<p class="text-muted">No learning patterns available yet.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading insights:', error);
+                insightsDiv.innerHTML = '<p class="text-muted">Unable to load insights.</p>';
+            }
+        }
+
+        // Load study patterns
+        async function loadStudyPatterns() {
+            const patternsDiv = document.getElementById('studyPatterns');
+            
+            try {
+                const response = await fetch('/recommendation/patterns');
+                const data = await response.json();
+                
+                if (data.success && data.patterns) {
+                    const patterns = data.patterns;
+                    
+                    let timePreference = 'Not available';
+                    if (patterns.time_of_day_preference) {
+                        const timePrefs = JSON.parse(patterns.time_of_day_preference);
+                        const maxTime = Object.keys(timePrefs).reduce((a, b) => timePrefs[a] > timePrefs[b] ? a : b);
+                        timePreference = maxTime.charAt(0).toUpperCase() + maxTime.slice(1);
+                    }
+                    
+                    patternsDiv.innerHTML = `
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <h4>${timePreference}</h4>
+                                    <small>Preferred Time</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <h4>${patterns.interaction_frequency.toFixed(1)}</h4>
+                                    <small>Interactions/Session</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <small>
+                                <i class="fas fa-chart-bar me-1"></i>
+                                ${patterns.retention_rate.toFixed(1)}% retention rate
+                            </small>
+                        </div>
+                    `;
+                } else {
+                    patternsDiv.innerHTML = '<p class="text-muted">No study patterns available yet.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading patterns:', error);
+                patternsDiv.innerHTML = '<p class="text-muted">Unable to load patterns.</p>';
+            }
+        }
+
+        // Load cluster information
+        async function loadClusterInfo() {
+            const clusterDiv = document.getElementById('clusterInfo');
+            
+            try {
+                const response = await fetch('/recommendation/clusters');
+                const data = await response.json();
+                
+                if (data.success && data.clusters.length > 0) {
+                    const cluster = data.clusters[0]; // Get first cluster
+                    clusterDiv.innerHTML = `
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <h4>Cluster ${cluster.cluster_id}</h4>
+                                    <small>${cluster.cluster_type.replace('_', ' ').toUpperCase()}</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <h4>${cluster.cluster_size}</h4>
+                                    <small>Similar Learners</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <small>
+                                <i class="fas fa-users me-1"></i>
+                                You're grouped with learners who have similar ${cluster.cluster_type.replace('_', ' ')} patterns
+                            </small>
+                        </div>
+                    `;
+                } else {
+                    clusterDiv.innerHTML = '<p class="text-muted">No cluster information available yet.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading clusters:', error);
+                clusterDiv.innerHTML = '<p class="text-muted">Unable to load cluster information.</p>';
+            }
+        }
+
+        // View recommendation
+        function viewRecommendation(contentId, contentType) {
+            // Navigate to the content based on type
+            if (contentType === 'course') {
+                window.location.href = `/content/courses/${contentId}`;
+            } else if (contentType === 'topic') {
+                window.location.href = `/content/topics/${contentId}`;
+            } else if (contentType === 'material') {
+                window.location.href = `/content/materials/${contentId}`;
+            }
+        }
+
+        // Mark recommendation as viewed
+        async function markAsViewed(contentId) {
+            try {
+                const response = await fetch(`/recommendation/recommendations/${contentId}/view`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    showAlert('success', 'Recommendation marked as viewed');
+                }
+            } catch (error) {
+                console.error('Error marking as viewed:', error);
+            }
+        }
+
+        // Show alert
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 3000);
+        }
+    </script>
+</body>
+</html> 

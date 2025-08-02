@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduLearn - Courses</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            --success-color: #4facfe;
+            --warning-color: #43e97b;
+            --danger-color: #ff6b6b;
+            --text-dark: #2d3748;
+            --text-light: #718096;
+            --bg-light: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-light);
+        }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 40px;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .page-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .course-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            height: 100%;
+        }
+
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .course-image {
+            height: 200px;
+            background: linear-gradient(135deg, var(--success-color) 0%, var(--warning-color) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .course-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .course-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .course-card:hover .course-overlay {
+            opacity: 1;
+        }
+
+        .course-content {
+            padding: 25px;
+        }
+
+        .course-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+
+        .course-description {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .course-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .course-instructor {
+            font-size: 0.9rem;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .course-level {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .level-beginner {
+            background: rgba(79, 172, 254, 0.1);
+            color: var(--success-color);
+        }
+
+        .level-intermediate {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+        }
+
+        .level-advanced {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--danger-color);
+        }
+
+        .course-stats {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .course-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-course {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color) 0%, var(--warning-color) 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.3);
+            color: white;
+        }
+
+        .filters-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box input {
+            padding-left: 45px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-light);
+        }
+
+        .filter-group {
+            margin-bottom: 15px;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .floating-action {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+
+        .btn-floating {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--success-color) 0%, var(--warning-color) 100%);
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .btn-floating:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .course-stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .course-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-graduation-cap me-2"></i>EduLearn
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/"><i class="fas fa-home me-1"></i>Home</a>
+                <a class="nav-link active" href="#"><i class="fas fa-book me-1"></i>Courses</a>
+                <a class="nav-link" href="/auth/logout"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="page-title">Discover Courses</h1>
+                    <p class="page-subtitle">Explore our comprehensive collection of learning materials</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    {% if current_user.is_teacher() or current_user.is_admin() %}
+                    <a href="{{ url_for('content.create_course') }}" class="btn btn-light">
+                        <i class="fas fa-plus me-2"></i>Create Course
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Filters Section -->
+        <div class="filters-section">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search courses...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="filter-group">
+                        <label for="categoryFilter">Category</label>
+                        <select class="form-select" id="categoryFilter">
+                            <option value="">All Categories</option>
+                            <option value="mathematics">Mathematics</option>
+                            <option value="science">Science</option>
+                            <option value="literature">Literature</option>
+                            <option value="history">History</option>
+                            <option value="arts">Arts</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="filter-group">
+                        <label for="levelFilter">Level</label>
+                        <select class="form-select" id="levelFilter">
+                            <option value="">All Levels</option>
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="filter-group">
+                        <label>&nbsp;</label>
+                        <button class="btn btn-primary w-100" onclick="applyFilters()">
+                            <i class="fas fa-filter me-1"></i>Filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Courses Grid -->
+        <div class="row" id="coursesGrid">
+            {% if courses %}
+                {% for course in courses %}
+                <div class="col-lg-4 col-md-6 mb-4 course-item" 
+                     data-title="{{ course.title.lower() }}" 
+                     data-category="{{ course.category.lower() }}" 
+                     data-level="{{ course.level.lower() }}">
+                    <div class="course-card">
+                        <div class="course-image">
+                            {% if course.thumbnail_url %}
+                                <img src="{{ course.thumbnail_url }}" alt="{{ course.title }}">
+                            {% else %}
+                                <i class="fas fa-book"></i>
+                            {% endif %}
+                            <div class="course-overlay">
+                                <a href="{{ url_for('content.view_course', course_id=course.id) }}" class="btn btn-light">
+                                    <i class="fas fa-eye me-1"></i>View Course
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="course-content">
+                            <h5 class="course-title">{{ course.title }}</h5>
+                            <p class="course-description">
+                                {{ course.description[:100] }}{% if course.description|length > 100 %}...{% endif %}
+                            </p>
+                            
+                            <div class="course-meta">
+                                <span class="course-instructor">
+                                    <i class="fas fa-user me-1"></i>{{ course.instructor.get_full_name() }}
+                                </span>
+                                <span class="course-level level-{{ course.level.lower() }}">
+                                    {{ course.level }}
+                                </span>
+                            </div>
+                            
+                            <div class="course-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">{{ course.topics.count() }}</div>
+                                    <div class="stat-label">Topics</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">{{ course.enrollments.count() }}</div>
+                                    <div class="stat-label">Students</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-number">{{ course.duration_hours|int }}</div>
+                                    <div class="stat-label">Hours</div>
+                                </div>
+                            </div>
+                            
+                            <div class="course-actions">
+                                <a href="{{ url_for('content.view_course', course_id=course.id) }}" class="btn-course btn-primary">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </a>
+                                {% if current_user.is_student() %}
+                                    {% set enrollment = course.enrollments.filter_by(student_id=current_user.id, is_active=True).first() %}
+                                    {% if enrollment %}
+                                        <span class="btn-course btn-success">
+                                            <i class="fas fa-check me-1"></i>Enrolled
+                                        </span>
+                                    {% else %}
+                                        <a href="{{ url_for('content.enroll_course', course_id=course.id) }}" class="btn-course btn-outline">
+                                            <i class="fas fa-plus me-1"></i>Enroll
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+                                {% if current_user.is_teacher() or current_user.is_admin() %}
+                                    <a href="{{ url_for('content.edit_course', course_id=course.id) }}" class="btn-course btn-outline">
+                                        <i class="fas fa-edit me-1"></i>Edit
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="fas fa-book-open"></i>
+                        <h3>No Courses Available</h3>
+                        <p>There are no courses to display at the moment.</p>
+                        {% if current_user.is_teacher() or current_user.is_admin() %}
+                        <a href="{{ url_for('content.create_course') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Create Your First Course
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    {% if current_user.is_teacher() or current_user.is_admin() %}
+    <div class="floating-action">
+        <a href="{{ url_for('content.create_course') }}" class="btn btn-floating">
+            <i class="fas fa-plus"></i>
+        </a>
+    </div>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Search and filter functionality
+        function applyFilters() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value.toLowerCase();
+            const levelFilter = document.getElementById('levelFilter').value.toLowerCase();
+            
+            const courseItems = document.querySelectorAll('.course-item');
+            
+            courseItems.forEach(item => {
+                const title = item.dataset.title;
+                const category = item.dataset.category;
+                const level = item.dataset.level;
+                
+                const matchesSearch = title.includes(searchTerm);
+                const matchesCategory = !categoryFilter || category === categoryFilter;
+                const matchesLevel = !levelFilter || level === levelFilter;
+                
+                if (matchesSearch && matchesCategory && matchesLevel) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+        
+        // Real-time search
+        document.getElementById('searchInput').addEventListener('input', applyFilters);
+        document.getElementById('categoryFilter').addEventListener('change', applyFilters);
+        document.getElementById('levelFilter').addEventListener('change', applyFilters);
+    </script>
+</body>
+</html> 

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Preferences - {{ user.first_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .preference-section {
+            border-left: 4px solid #007bff;
+            padding-left: 1rem;
+            margin-bottom: 2rem;
+        }
+        .interest-tag {
+            display: inline-block;
+            background: #e9ecef;
+            border: 1px solid #dee2e6;
+            border-radius: 20px;
+            padding: 0.25rem 0.75rem;
+            margin: 0.25rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .interest-tag:hover {
+            background: #007bff;
+            color: white;
+        }
+        .interest-tag.selected {
+            background: #007bff;
+            color: white;
+        }
+        .custom-interest {
+            border: 2px dashed #dee2e6;
+            background: #f8f9fa;
+        }
+        .custom-interest:hover {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-cog me-2"></i>Learning Preferences
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('recommendation.recommendation_dashboard') }}">
+                    <i class="fas fa-brain me-1"></i>Recommendations
+                </a>
+                <a class="nav-link" href="{{ url_for('student_dashboard') }}">
+                    <i class="fas fa-home me-1"></i>Dashboard
+                </a>
+                <a class="nav-link" href="{{ url_for('auth.logout') }}">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="mb-4">
+                    <i class="fas fa-user-cog text-primary me-2"></i>
+                    Your Learning Preferences
+                </h1>
+                <p class="text-muted">Customize your learning experience to get better recommendations</p>
+            </div>
+        </div>
+
+        <form id="preferencesForm">
+            <!-- Learning Style Preferences -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card preference-section">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-graduation-cap text-primary me-2"></i>
+                                Learning Style & Difficulty
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Preferred Difficulty Level</label>
+                                    <select class="form-select" id="preferredDifficulty" name="preferred_difficulty">
+                                        <option value="beginner">Beginner</option>
+                                        <option value="intermediate" selected>Intermediate</option>
+                                        <option value="advanced">Advanced</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label">Learning Style</label>
+                                    <select class="form-select" id="preferredLearningStyle" name="preferred_learning_style">
+                                        <option value="">Select your preferred style</option>
+                                        <option value="visual">Visual (Videos, diagrams, charts)</option>
+                                        <option value="auditory">Auditory (Audio lectures, discussions)</option>
+                                        <option value="kinesthetic">Kinesthetic (Hands-on, interactive)</option>
+                                        <option value="reading">Reading (Text-based, articles)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Preferred Content Type</label>
+                                    <select class="form-select" id="preferredContentType" name="preferred_content_type">
+                                        <option value="">Select preferred content</option>
+                                        <option value="video">Video Lectures</option>
+                                        <option value="text">Text Articles</option>
+                                        <option value="interactive">Interactive Exercises</option>
+                                        <option value="quiz">Quizzes & Assessments</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label">Session Duration (minutes)</label>
+                                    <input type="number" class="form-control" id="preferredSessionDuration" 
+                                           name="preferred_session_duration" min="15" max="180" value="30">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subject Interests -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card preference-section">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-book text-success me-2"></i>
+                                Subject Interests
+                            </h5>
+                            <p class="text-muted">Select subjects you're interested in learning</p>
+                            
+                            <div id="subjectInterests" class="mb-3">
+                                <!-- Subject tags will be loaded here -->
+                            </div>
+                            
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="newSubject" 
+                                       placeholder="Add a custom subject...">
+                                <button class="btn btn-outline-secondary" type="button" onclick="addCustomSubject()">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Topic Interests -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card preference-section">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-tags text-warning me-2"></i>
+                                Specific Topics
+                            </h5>
+                            <p class="text-muted">Select specific topics you want to explore</p>
+                            
+                            <div id="topicInterests" class="mb-3">
+                                <!-- Topic tags will be loaded here -->
+                            </div>
+                            
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="newTopic" 
+                                       placeholder="Add a custom topic...">
+                                <button class="btn btn-outline-secondary" type="button" onclick="addCustomTopic()">
+                                    <i class="fas fa-plus"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time & Device Preferences -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card preference-section">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-clock text-info me-2"></i>
+                                Time & Device Preferences
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label class="form-label">Preferred Study Time</label>
+                                    <select class="form-select" id="preferredStudyTime" name="preferred_study_time">
+                                        <option value="">Select preferred time</option>
+                                        <option value="morning">Morning (6 AM - 12 PM)</option>
+                                        <option value="afternoon">Afternoon (12 PM - 6 PM)</option>
+                                        <option value="evening">Evening (6 PM - 12 AM)</option>
+                                        <option value="night">Night (12 AM - 6 AM)</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label class="form-label">Preferred Device</label>
+                                    <select class="form-select" id="preferredDevice" name="preferred_device">
+                                        <option value="">Select preferred device</option>
+                                        <option value="desktop">Desktop/Laptop</option>
+                                        <option value="mobile">Mobile Phone</option>
+                                        <option value="tablet">Tablet</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Preferences -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card preference-section">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-bell text-danger me-2"></i>
+                                Notification Preferences
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="emailNotifications" 
+                                               name="email_notifications" checked>
+                                        <label class="form-check-label" for="emailNotifications">
+                                            Email Notifications
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="pushNotifications" 
+                                               name="push_notifications" checked>
+                                        <label class="form-check-label" for="pushNotifications">
+                                            Push Notifications
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <label class="form-label">Recommendation Frequency</label>
+                                    <select class="form-select" id="recommendationFrequency" name="recommendation_frequency">
+                                        <option value="daily">Daily</option>
+                                        <option value="weekly" selected>Weekly</option>
+                                        <option value="monthly">Monthly</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="row">
+                <div class="col-12 text-center">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save me-2"></i>Save Preferences
+                    </button>
+                    <a href="{{ url_for('recommendation.recommendation_dashboard') }}" class="btn btn-outline-secondary btn-lg ms-3">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Recommendations
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let selectedSubjects = [];
+        let selectedTopics = [];
+        
+        // Predefined options
+        const subjectOptions = [
+            'Mathematics', 'Science', 'History', 'Literature', 'Computer Science',
+            'Business', 'Art', 'Music', 'Language', 'Philosophy', 'Psychology',
+            'Economics', 'Politics', 'Geography', 'Biology', 'Chemistry', 'Physics',
+            'Engineering', 'Medicine', 'Law', 'Education', 'Technology'
+        ];
+        
+        const topicOptions = [
+            'Algebra', 'Calculus', 'Statistics', 'Machine Learning', 'Web Development',
+            'Data Science', 'Artificial Intelligence', 'World War II', 'Ancient Rome',
+            'Shakespeare', 'Poetry', 'Marketing', 'Finance', 'Entrepreneurship',
+            'Digital Art', 'Classical Music', 'Spanish', 'French', 'Ethics',
+            'Cognitive Psychology', 'Microeconomics', 'International Relations',
+            'Human Geography', 'Genetics', 'Organic Chemistry', 'Quantum Physics',
+            'Software Engineering', 'Anatomy', 'Constitutional Law', 'Pedagogy'
+        ];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCurrentPreferences();
+            renderSubjectTags();
+            renderTopicTags();
+            
+            // Form submission
+            document.getElementById('preferencesForm').addEventListener('submit', savePreferences);
+        });
+
+        // Load current preferences
+        async function loadCurrentPreferences() {
+            try {
+                const response = await fetch('/recommendation/preferences');
+                const data = await response.json();
+                
+                if (data.success && data.preferences) {
+                    const prefs = data.preferences;
+                    
+                    // Set form values
+                    document.getElementById('preferredDifficulty').value = prefs.preferred_difficulty || 'intermediate';
+                    document.getElementById('preferredLearningStyle').value = prefs.preferred_learning_style || '';
+                    document.getElementById('preferredContentType').value = prefs.preferred_content_type || '';
+                    document.getElementById('preferredSessionDuration').value = prefs.preferred_session_duration || 30;
+                    document.getElementById('preferredStudyTime').value = prefs.preferred_study_time || '';
+                    document.getElementById('preferredDevice').value = prefs.preferred_device || '';
+                    document.getElementById('emailNotifications').checked = prefs.email_notifications !== false;
+                    document.getElementById('pushNotifications').checked = prefs.push_notifications !== false;
+                    document.getElementById('recommendationFrequency').value = prefs.recommendation_frequency || 'weekly';
+                    
+                    // Set selected arrays
+                    selectedSubjects = prefs.subject_interests || [];
+                    selectedTopics = prefs.topic_interests || [];
+                    
+                    // Re-render tags
+                    renderSubjectTags();
+                    renderTopicTags();
+                }
+            } catch (error) {
+                console.error('Error loading preferences:', error);
+            }
+        }
+
+        // Render subject tags
+        function renderSubjectTags() {
+            const container = document.getElementById('subjectInterests');
+            container.innerHTML = '';
+            
+            // Render predefined subjects
+            subjectOptions.forEach(subject => {
+                const tag = createTag(subject, selectedSubjects.includes(subject), 'subject');
+                container.appendChild(tag);
+            });
+            
+            // Render custom subjects
+            selectedSubjects.forEach(subject => {
+                if (!subjectOptions.includes(subject)) {
+                    const tag = createTag(subject, true, 'subject', true);
+                    container.appendChild(tag);
+                }
+            });
+        }
+
+        // Render topic tags
+        function renderTopicTags() {
+            const container = document.getElementById('topicInterests');
+            container.innerHTML = '';
+            
+            // Render predefined topics
+            topicOptions.forEach(topic => {
+                const tag = createTag(topic, selectedTopics.includes(topic), 'topic');
+                container.appendChild(tag);
+            });
+            
+            // Render custom topics
+            selectedTopics.forEach(topic => {
+                if (!topicOptions.includes(topic)) {
+                    const tag = createTag(topic, true, 'topic', true);
+                    container.appendChild(tag);
+                }
+            });
+        }
+
+        // Create tag element
+        function createTag(text, isSelected, type, isCustom = false) {
+            const tag = document.createElement('span');
+            tag.className = `interest-tag ${isSelected ? 'selected' : ''} ${isCustom ? 'custom-interest' : ''}`;
+            tag.textContent = text;
+            
+            tag.addEventListener('click', () => {
+                if (type === 'subject') {
+                    toggleSubject(text);
+                } else if (type === 'topic') {
+                    toggleTopic(text);
+                }
+            });
+            
+            return tag;
+        }
+
+        // Toggle subject selection
+        function toggleSubject(subject) {
+            const index = selectedSubjects.indexOf(subject);
+            if (index > -1) {
+                selectedSubjects.splice(index, 1);
+            } else {
+                selectedSubjects.push(subject);
+            }
+            renderSubjectTags();
+        }
+
+        // Toggle topic selection
+        function toggleTopic(topic) {
+            const index = selectedTopics.indexOf(topic);
+            if (index > -1) {
+                selectedTopics.splice(index, 1);
+            } else {
+                selectedTopics.push(topic);
+            }
+            renderTopicTags();
+        }
+
+        // Add custom subject
+        function addCustomSubject() {
+            const input = document.getElementById('newSubject');
+            const subject = input.value.trim();
+            
+            if (subject && !selectedSubjects.includes(subject)) {
+                selectedSubjects.push(subject);
+                renderSubjectTags();
+                input.value = '';
+            }
+        }
+
+        // Add custom topic
+        function addCustomTopic() {
+            const input = document.getElementById('newTopic');
+            const topic = input.value.trim();
+            
+            if (topic && !selectedTopics.includes(topic)) {
+                selectedTopics.push(topic);
+                renderTopicTags();
+                input.value = '';
+            }
+        }
+
+        // Save preferences
+        async function savePreferences(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const preferences = {
+                preferred_difficulty: formData.get('preferred_difficulty'),
+                preferred_learning_style: formData.get('preferred_learning_style'),
+                preferred_content_type: formData.get('preferred_content_type'),
+                preferred_session_duration: parseInt(formData.get('preferred_session_duration')),
+                preferred_study_time: formData.get('preferred_study_time'),
+                preferred_device: formData.get('preferred_device'),
+                email_notifications: formData.get('email_notifications') === 'on',
+                push_notifications: formData.get('push_notifications') === 'on',
+                recommendation_frequency: formData.get('recommendation_frequency'),
+                subject_interests: selectedSubjects,
+                topic_interests: selectedTopics
+            };
+            
+            try {
+                const response = await fetch('/recommendation/preferences', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(preferences)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('success', 'Preferences saved successfully!');
+                    
+                    // Redirect to recommendations after a short delay
+                    setTimeout(() => {
+                        window.location.href = '/recommendation/dashboard';
+                    }, 1500);
+                } else {
+                    showAlert('danger', 'Failed to save preferences');
+                }
+            } catch (error) {
+                console.error('Error saving preferences:', error);
+                showAlert('danger', 'Error saving preferences');
+            }
+        }
+
+        // Show alert
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 3000);
+        }
+
+        // Enter key handlers for custom inputs
+        document.getElementById('newSubject').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addCustomSubject();
+            }
+        });
+
+        document.getElementById('newTopic').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addCustomTopic();
+            }
+        });
+    </script>
+</body>
+</html> 

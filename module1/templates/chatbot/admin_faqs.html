@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduLearn - FAQ Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            --success-color: #4facfe;
+            --warning-color: #43e97b;
+            --danger-color: #ff6b6b;
+            --text-dark: #2d3748;
+            --text-light: #718096;
+            --bg-light: #f8fafc;
+            --sidebar-width: 280px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-light);
+            margin: 0;
+            padding: 0;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 30px 25px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header h3 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .sidebar-header p {
+            margin: 5px 0 0 0;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            margin: 5px 0;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: var(--accent-color);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            border-left-color: var(--accent-color);
+        }
+
+        .nav-link i {
+            width: 20px;
+            margin-right: 12px;
+            font-size: 1.1rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+
+        .page-subtitle {
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+
+        /* FAQ Card */
+        .faq-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .faq-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .faq-question {
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .faq-answer {
+            color: var(--text-light);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .faq-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .faq-category {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary-color);
+        }
+
+        .faq-status {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: rgba(67, 233, 123, 0.1);
+            color: var(--success-color);
+        }
+
+        .status-inactive {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--danger-color);
+        }
+
+        .faq-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-action {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-edit {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary-color);
+        }
+
+        .btn-edit:hover {
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .btn-delete {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--danger-color);
+        }
+
+        .btn-delete:hover {
+            background: rgba(255, 107, 107, 0.2);
+        }
+
+        .btn-toggle {
+            background: rgba(67, 233, 123, 0.1);
+            color: var(--success-color);
+        }
+
+        .btn-toggle:hover {
+            background: rgba(67, 233, 123, 0.2);
+        }
+
+        /* Form Styles */
+        .form-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+        }
+
+        .form-header {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+        }
+
+        .form-control, .form-select {
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 25px;
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h3><i class="fas fa-shield-alt me-2"></i>EduLearn</h3>
+                <p>Admin Portal</p>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-item">
+                    <a href="/admin-dashboard" class="nav-link">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/chatbot/admin/faqs" class="nav-link active">
+                        <i class="fas fa-question-circle"></i>
+                        FAQ Management
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/content/courses" class="nav-link">
+                        <i class="fas fa-book"></i>
+                        Course Management
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/auth/logout" class="nav-link">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </a>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">FAQ Management</h1>
+                <p class="page-subtitle">Manage frequently asked questions for the learning platform</p>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">{{ faqs|length }}</div>
+                    <div class="stat-label">Total FAQs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ faqs|selectattr('is_active', 'equalto', true)|list|length }}</div>
+                    <div class="stat-label">Active FAQs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ faqs|selectattr('is_active', 'equalto', false)|list|length }}</div>
+                    <div class="stat-label">Inactive FAQs</div>
+                </div>
+            </div>
+
+            <!-- Add FAQ Form -->
+            <div class="form-card">
+                <h3 class="form-header"><i class="fas fa-plus-circle me-2"></i>Add New FAQ</h3>
+                <form id="faqForm">
+                    <div class="mb-3">
+                        <label for="faqQuestion" class="form-label">Question</label>
+                        <input type="text" class="form-control" id="faqQuestion" placeholder="Enter the question" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="faqAnswer" class="form-label">Answer</label>
+                        <textarea class="form-control" id="faqAnswer" rows="4" placeholder="Enter the answer" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="faqCategory" class="form-label">Category (Optional)</label>
+                        <input type="text" class="form-control" id="faqCategory" placeholder="e.g., Courses, Assessments, etc.">
+                    </div>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-save me-2"></i>Create FAQ
+                    </button>
+                </form>
+            </div>
+
+            <!-- FAQ List -->
+            <div class="page-header">
+                <h2 class="page-title">Existing FAQs</h2>
+                <p class="page-subtitle">Manage and update your frequently asked questions</p>
+            </div>
+
+            <div id="faqList">
+                {% for faq in faqs %}
+                <div class="faq-card" data-faq-id="{{ faq.id }}">
+                    <div class="faq-question">{{ faq.question }}</div>
+                    <div class="faq-answer">{{ faq.answer }}</div>
+                    <div class="faq-meta">
+                        <div>
+                            {% if faq.category %}
+                            <span class="faq-category">{{ faq.category }}</span>
+                            {% endif %}
+                            <span class="faq-status {% if faq.is_active %}status-active{% else %}status-inactive{% endif %}">
+                                {% if faq.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </div>
+                        <div class="faq-actions">
+                            <button class="btn-action btn-edit" onclick="editFAQ({{ faq.id }})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn-action btn-toggle" onclick="toggleFAQ({{ faq.id }})">
+                                <i class="fas fa-{% if faq.is_active %}toggle-on{% else %}toggle-off{% endif %}"></i>
+                            </button>
+                            <button class="btn-action btn-delete" onclick="deleteFAQ({{ faq.id }})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Handle form submission
+        document.getElementById('faqForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const question = document.getElementById('faqQuestion').value;
+            const answer = document.getElementById('faqAnswer').value;
+            const category = document.getElementById('faqCategory').value;
+            
+            fetch('/chatbot/admin/faqs/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    question: question,
+                    answer: answer,
+                    category: category
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert('FAQ created successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error creating FAQ');
+            });
+        });
+
+        // Toggle FAQ active status
+        function toggleFAQ(faqId) {
+            // Get current FAQ data
+            const faqCard = document.querySelector(`[data-faq-id="${faqId}"]`);
+            const isActive = faqCard.querySelector('.faq-status').classList.contains('status-active');
+            const question = faqCard.querySelector('.faq-question').textContent;
+            const answer = faqCard.querySelector('.faq-answer').textContent;
+            const categoryElement = faqCard.querySelector('.faq-category');
+            const category = categoryElement ? categoryElement.textContent : '';
+            
+            fetch(`/chatbot/admin/faqs/${faqId}/update`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    question: question,
+                    answer: answer,
+                    category: category,
+                    is_active: !isActive
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    location.reload();
+                } else {
+                    alert('Error updating FAQ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating FAQ');
+            });
+        }
+
+        // Delete FAQ
+        function deleteFAQ(faqId) {
+            if (!confirm('Are you sure you want to delete this FAQ?')) {
+                return;
+            }
+            
+            fetch(`/chatbot/admin/faqs/${faqId}/delete`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert('FAQ deleted successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error deleting FAQ');
+            });
+        }
+
+        // Edit FAQ (simplified implementation)
+        function editFAQ(faqId) {
+            const faqCard = document.querySelector(`[data-faq-id="${faqId}"]`);
+            const question = faqCard.querySelector('.faq-question').textContent;
+            const answer = faqCard.querySelector('.faq-answer').textContent;
+            const categoryElement = faqCard.querySelector('.faq-category');
+            const category = categoryElement ? categoryElement.textContent : '';
+            
+            // Fill form with FAQ data
+            document.getElementById('faqQuestion').value = question;
+            document.getElementById('faqAnswer').value = answer;
+            document.getElementById('faqCategory').value = category;
+            
+            // Scroll to form
+            document.getElementById('faqForm').scrollIntoView({ behavior: 'smooth' });
+            
+            // Change form to update mode
+            const submitButton = document.querySelector('#faqForm button[type="submit"]');
+            submitButton.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Update FAQ';
+            submitButton.onclick = function(e) {
+                e.preventDefault();
+                updateFAQ(faqId);
+            };
+        }
+
+        // Update FAQ
+        function updateFAQ(faqId) {
+            const question = document.getElementById('faqQuestion').value;
+            const answer = document.getElementById('faqAnswer').value;
+            const category = document.getElementById('faqCategory').value;
+            
+            fetch(`/chatbot/admin/faqs/${faqId}/update`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    question: question,
+                    answer: answer,
+                    category: category
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert('FAQ updated successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating FAQ');
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduLearn - Progress Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            --success-color: #4facfe;
+            --warning-color: #43e97b;
+            --danger-color: #ff6b6b;
+            --text-dark: #2d3748;
+            --text-light: #718096;
+            --bg-light: #f8fafc;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-light);
+            margin: 0;
+            padding: 0;
+        }
+
+        .progress-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+
+        .page-subtitle {
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .stat-icon.primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        }
+
+        .stat-icon.success {
+            background: linear-gradient(135deg, var(--success-color) 0%, var(--warning-color) 100%);
+        }
+
+        .stat-icon.warning {
+            background: linear-gradient(135deg, #ffd93d 0%, var(--danger-color) 100%);
+        }
+
+        .stat-icon.info {
+            background: linear-gradient(135deg, #74c0fc 0%, #339af0 100%);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 20px;
+        }
+
+        .progress-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .course-progress-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .course-progress-item:last-child {
+            border-bottom: none;
+        }
+
+        .course-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            margin-right: 15px;
+        }
+
+        .course-info {
+            flex: 1;
+        }
+
+        .course-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .course-stats {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .progress-bar {
+            height: 8px;
+            border-radius: 10px;
+            background: #e2e8f0;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--success-color) 0%, var(--warning-color) 100%);
+            transition: width 0.3s ease;
+        }
+
+        .streak-card {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .streak-number {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .streak-label {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .recent-activity {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1rem;
+        }
+
+        .activity-icon.lesson {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--primary-color);
+        }
+
+        .activity-icon.quiz {
+            background: rgba(79, 172, 254, 0.1);
+            color: var(--success-color);
+        }
+
+        .activity-icon.assignment {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--danger-color);
+        }
+
+        .activity-info {
+            flex: 1;
+        }
+
+        .activity-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 2px;
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-light);
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .progress-container {
+                padding: 20px 15px;
+            }
+            
+            .page-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="page-header">
+            <h1 class="page-title">Learning Progress Dashboard</h1>
+            <p class="page-subtitle">Track your learning journey and achievements</p>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading your progress data...</p>
+        </div>
+
+        <!-- Main Content -->
+        <div id="content" style="display: none;">
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon primary">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="stat-number" id="total-courses">0</div>
+                    <div class="stat-label">Active Courses</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon success">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-number" id="avg-progress">0%</div>
+                    <div class="stat-label">Average Progress</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon warning">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-number" id="total-time">0h</div>
+                    <div class="stat-label">Total Study Time</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon info">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="stat-number" id="current-streak">0</div>
+                    <div class="stat-label">Day Streak</div>
+                </div>
+            </div>
+
+            <!-- Study Streak -->
+            <div class="streak-card">
+                <div class="streak-number" id="streak-display">0</div>
+                <div class="streak-label">Day Learning Streak</div>
+                <p class="mt-2 mb-0">Keep up the great work! 🔥</p>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <h3 class="chart-title">Weekly Progress</h3>
+                        <canvas id="weeklyChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <h3 class="chart-title">Activity Distribution</h3>
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Course Progress -->
+            <div class="progress-section">
+                <h3 class="chart-title">Course Progress</h3>
+                <div id="course-progress-list">
+                    <!-- Course progress items will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="recent-activity">
+                <h3 class="chart-title">Recent Activity</h3>
+                <div id="recent-activity-list">
+                    <!-- Recent activities will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let weeklyChart, activityChart;
+        let progressData = {};
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProgressData();
+        });
+
+        // Load progress data
+        async function loadProgressData() {
+            try {
+                const response = await fetch('/progress/api/progress/overview');
+                const data = await response.json();
+                
+                if (data.success) {
+                    progressData = data;
+                    displayProgressData();
+                    initializeCharts();
+                    hideLoading();
+                } else {
+                    console.error('Failed to load progress data:', data.error);
+                }
+            } catch (error) {
+                console.error('Error loading progress data:', error);
+            }
+        }
+
+        // Display progress data
+        function displayProgressData() {
+            const overview = progressData.overview;
+            
+            // Update stats
+            document.getElementById('total-courses').textContent = overview.total_courses;
+            document.getElementById('avg-progress').textContent = overview.average_progress + '%';
+            document.getElementById('total-time').textContent = overview.total_time_hours + 'h';
+            document.getElementById('current-streak').textContent = overview.current_streak;
+            document.getElementById('streak-display').textContent = overview.current_streak;
+
+            // Display course progress
+            displayCourseProgress();
+            
+            // Display recent activity
+            displayRecentActivity();
+        }
+
+        // Display course progress
+        function displayCourseProgress() {
+            const container = document.getElementById('course-progress-list');
+            const courses = progressData.course_progress || [];
+            
+            if (courses.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">No courses in progress</p>';
+                return;
+            }
+
+            container.innerHTML = courses.map(course => `
+                <div class="course-progress-item">
+                    <div class="course-icon">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div class="course-info">
+                        <div class="course-name">Course ${course.course_id}</div>
+                        <div class="course-stats">
+                            ${course.topics_completed}/${course.total_topics} topics • 
+                            ${course.materials_completed}/${course.total_materials} materials
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${course.overall_progress}%"></div>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="stat-number">${course.overall_progress}%</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Display recent activity
+        function displayRecentActivity() {
+            const container = document.getElementById('recent-activity-list');
+            const activities = progressData.recent_activities || [];
+            
+            if (activities.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">No recent activity</p>';
+                return;
+            }
+
+            container.innerHTML = activities.map(activity => {
+                const iconClass = getActivityIconClass(activity.activity_type);
+                const timeAgo = getTimeAgo(activity.started_at);
+                
+                return `
+                    <div class="activity-item">
+                        <div class="activity-icon ${iconClass}">
+                            <i class="fas ${getActivityIcon(activity.activity_type)}"></i>
+                        </div>
+                        <div class="activity-info">
+                            <div class="activity-name">${activity.activity_name}</div>
+                            <div class="activity-time">${timeAgo}</div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-success">${activity.status}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Get activity icon class
+        function getActivityIconClass(activityType) {
+            switch (activityType) {
+                case 'lesson_view': return 'lesson';
+                case 'quiz_take': return 'quiz';
+                case 'assignment_submit': return 'assignment';
+                default: return 'lesson';
+            }
+        }
+
+        // Get activity icon
+        function getActivityIcon(activityType) {
+            switch (activityType) {
+                case 'lesson_view': return 'fa-book-open';
+                case 'quiz_take': return 'fa-question-circle';
+                case 'assignment_submit': return 'fa-file-alt';
+                default: return 'fa-book-open';
+            }
+        }
+
+        // Get time ago
+        function getTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            return `${diffDays}d ago`;
+        }
+
+        // Initialize charts
+        function initializeCharts() {
+            // Weekly Progress Chart
+            const weeklyCtx = document.getElementById('weeklyChart').getContext('2d');
+            weeklyChart = new Chart(weeklyCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Study Time (hours)',
+                        data: [2, 3, 1.5, 4, 2.5, 3.5, 2],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + 'h';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Activity Distribution Chart
+            const activityCtx = document.getElementById('activityChart').getContext('2d');
+            activityChart = new Chart(activityCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Lessons', 'Quizzes', 'Assignments', 'Videos'],
+                    datasets: [{
+                        data: [40, 25, 20, 15],
+                        backgroundColor: [
+                            '#667eea',
+                            '#4facfe',
+                            '#ff6b6b',
+                            '#43e97b'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Hide loading
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+        }
+
+        // Auto-refresh data every 5 minutes
+        setInterval(loadProgressData, 300000);
+    </script>
+</body>
+</html> 
