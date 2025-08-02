@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: Edu Learn
+    env: python
+    plan: free
+    buildCommand: pip install -r module1/requirements.txt
+    startCommand: gunicorn --chdir module1 app:app
+    envVars:
+      - key: SECRET_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+    domains:
+      - your-custom-domain.com # Optional: Add your custom domain here
